@@ -1,2 +1,1 @@
 # GameHub
-## Is good
