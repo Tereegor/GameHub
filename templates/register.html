@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameHub - Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div id="particles-js"></div>
+
+<header>
+    <div class="logo">GameHub</div>
+    <nav>
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">Главная</span></a>
+        <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile" data-ru="Профиль">Профиль</span></a>
+        <a href="{{ url_for('faq') }}"><i class="fas fa-question-circle"></i> <span data-en="FAQ" data-ru="FAQ">FAQ</span></a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">Выход</span></a>
+        {% else %}
+        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login" data-ru="Вход">Вход</span></a>
+        <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span data-en="Register" data-ru="Регистрация">Регистрация</span></a>
+        {% endif %}
+        <button id="lang-toggle">{{ 'RU' if g.lang == 'en' else 'EN' }}</button>
+    </nav>
+    <div class="hamburger"><i class="fas fa-bars"></i></div>
+</header>
+
+<section class="auth-form">
+    <h1 data-en="Register" data-ru="Регистрация">Register</h1>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Username" data-en="Username" data-ru="Имя пользователя" class="auth-input" required>
+        <input type="email" name="email" placeholder="Email" data-en="Email" data-ru="Электронная почта" class="auth-input" required>
+        <input type="password" name="password" placeholder="Password" data-en="Password" data-ru="Пароль" class="auth-input" required>
+        <input type="password" name="confirm_password" placeholder="Confirm Password" data-en="Confirm Password" data-ru="Подтвердите пароль" class="auth-input" required>
+        <button type="submit" class="cta" data-en="Register" data-ru="Зарегистрироваться">Register</button>
+    </form>
+    <p data-en="Already have an account?" data-ru="Уже есть аккаунт?">Already have an account? <a href="/login" data-en="Login here" data-ru="Войдите здесь">Login here</a></p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <p class="flash-{{ category }}">{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</section>
+
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>
