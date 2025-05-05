@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form action="/shopping_cart" method="POST">
+    <div class="sidebar">
+        Количество товара: <input  type="number" value="0"  id="first_product" name="first_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_2">
+        Количество товара: <input type="number" value="0"  id="twice_product" name="twice_product" placeholder="Ввидите число">
+    </div>
+    <div class="sidebar_3">
+        Количество товара: <input type="number" value="0"  id="three_product" name="three_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_4">
+        Количество товара: <input type="number" value="0"  id="four_product" name="four_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_5">
+        Количество товара: <input type="number" value="0" id="five_product" name="five_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_6">
+        Количество товара: <input type="number" value="0" id="six_product" name="six_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_7">
+        Количество товара: <input type="number" value="0" id="seven_product" name="seven_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_8">
+        Количество товара: <input type="number" value="0" id="eight_product" name="eight_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_9">
+        Количество товара: <input type="number" value="0" id="nine_product" name="nine_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_10">
+        Количество товара: <input type="number" value="0" id="ten_product" name="ten_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_11">
+        Количество товара: <input type="number" value="0" id="eleven_product" name="eleven_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_12">
+        Количество товара: <input type="number" value="0" id="twelve_product" name="twelve_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_13">
+        Количество товара: <input type="number" value="0" id="thirteen_product" name="thirteen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_14">
+        Количество товара: <input type="number" value="0" id="fourteen_product" name="fourteen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_15">
+        Количество товара: <input type="number" value="0" id="fifteen_product" name="fifteen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_16">
+        Количество товара: <input type="number" value="0" id="sixteen_product" name="sixteen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_17">
+        Количество товара: <input type="number" value="0" id="seventeen_product" name="seventeen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_18">
+        Количество товара: <input type="number" value="0" id="eighteen_product" name="eighteen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_19">
+        Количество товара: <input type="number" value="0" id="nineteen_product" name="nineteen_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_20">
+        Количество товара: <input type="number" value="0" id="twenty_product" name="twenty_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_21">
+        Количество товара: <input type="number" value="0" id="twenty_one_product" name="twenty_one_product" placeholder="Введите число">
+    </div>
+    <div class="sidebar_22">
+        Количество товара: <input type="number" value="0" id="twenty_two_product" name="twenty_two_product" placeholder="Введите число">
+    </div>
+    <div class="place_of_button">
+        <input class="btn danger" type="submit" value="Добавить в корзину">
+    </div>
+</form>
+
+<div class="container text-center">
+  <div class="row mb-5">
+    <div class="col-2 p-3 text-primary-emphasis bg-primary-subtle border border-primary-subtle rounded-3">
+      <b> Товар </b>
+    </div>
+    <div class="col-2 p-3 text-primary-emphasis bg-primary-subtle border border-primary-subtle rounded-3">
+      <b> Цена </b>
+    </div>
+    <div class="col-2 p-3 text-primary-emphasis bg-primary-subtle border border-primary-subtle rounded-3">
+      <b> Количество на складе </b>
+    </div>
+    <div class="col-2 p-3 text-primary-emphasis bg-primary-subtle border border-primary-subtle rounded-3">
+      <b> Время использования </b>
+    </div>
+    <div class="col-2 p-3 text-primary-emphasis bg-primary-subtle border border-primary-subtle rounded-3">
+      <b> Уникальность </b>
+    </div>
+    <div class="col-2 p-3 text-primary-emphasis bg-primary-subtle border border-primary-subtle rounded-3">
+      <b> Средняя оценка </b>
+    </div>
+  </div>
+</div>
+{% for ware in information['product'] %}
+   <div class="container text-center">
+    <div class="row mb-3 mt-3">
+      <div class="col-2 p-3 alert alert-success role=alert rounded-3 border border-primary-subtle rounded-3">
+        {{ ware['article'] }}
+      </div>
+      <div class="col-2 p-3 alert alert-success role=alert rounded-3 border border-primary-subtle rounded-3">
+        {{ ware['price'] }}
+      </div>
+      <div class="col-2 p-3 alert alert-success role=alert rounded-3 border border-primary-subtle rounded-3">
+        {{ ware['quantity'] }}
+      </div>
+      <div class="col-2 p-3 alert alert-success role=alert rounded-3 border border-primary-subtle rounded-3">
+        {{ ware['usage_time'] }}
+      </div>
+      <div class="col-2 p-3 alert alert-success role=alert rounded-3 border border-primary-subtle rounded-3">
+        {{ ware['uniqueness'] }}
+      </div>
+      <div class="col-2 p-3 alert alert-success role=alert rounded-3 border border-primary-subtle rounded-3">
+        {{ ware['average_score'] }}
+      </div>
+    </div>
+   </div>
+{% endfor %}
+
+{% endblock %}
