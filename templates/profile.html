@@ -3,23 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameHub - {{ 'Профиль' if g.lang == 'ru' else 'Profile' }}</title>
+    <title>GameHub - {{ 'Profile' if g.lang == 'en' else 'Профиль' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
 </head>
 <body class="{{ 'lang-ru' if g.lang == 'ru' else 'lang-en' }}">
 <header>
-    <div class="logo">GameHub</div>
+    <div class="logo glitchSoft" data-text="GameHub">GameHub</div>
     <nav>
-        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">Главная</span></a>
-        <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile" data-ru="Профиль">Профиль</span></a>
-        <a href="{{ url_for('faq') }}"><i class="fas fa-question-circle"></i> <span data-en="FAQ" data-ru="FAQ">FAQ</span></a>
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">{{ 'Home' if g.lang == 'en' else 'Главная' }}</span></a>
+        <a href="{{ url_for('marketplace') }}"><i class="fas fa-shopping-cart"></i> <span data-en="Marketplace"
+                                                                                          data-ru="Маркетплейс">{{ 'Marketplace' if g.lang == 'en' else 'Маркетплейс' }}</span></a>
+        <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile" data-ru="Профиль">{{ 'Profile' if g.lang == 'en' else 'Профиль' }}</span></a>
+        <a href="{{ url_for('chats') }}"><i class="fas fa-comments"></i> <span data-en="Chats" data-ru="Чаты">{{ 'Chats' if g.lang == 'en' else 'Чаты' }}</span></a>
+        <a href="{{ url_for('faq') }}"><i class="fas fa-question-circle"></i> <span data-en="FAQ" data-ru="FAQ">{{ 'FAQ' if g.lang == 'en' else 'FAQ' }}</span></a>
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+        <a href="{{ url_for('admin') }}"><i class="fas fa-tools"></i> <span data-en="Admin" data-ru="Админ">{{ 'Admin' if g.lang == 'en' else 'Админ' }}</span></a>
+        {% endif %}
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">Выход</span></a>
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">{{ 'Logout' if g.lang == 'en' else 'Выход' }}</span></a>
         {% else %}
-        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login" data-ru="Вход">Вход</span></a>
-        <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span data-en="Register" data-ru="Регистрация">Регистрация</span></a>
+        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login" data-ru="Вход">{{ 'Login' if g.lang == 'en' else 'Вход' }}</span></a>
+        <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span data-en="Register"
+                                                                                   data-ru="Регистрация">{{ 'Register' if g.lang == 'en' else 'Регистрация' }}</span></a>
         {% endif %}
         <button id="lang-toggle">{{ 'RU' if g.lang == 'en' else 'EN' }}</button>
     </nav>
@@ -28,32 +34,87 @@
 
 <section class="profile">
     <div class="profile-container">
-        <h1 data-en="Profile" data-ru="Профиль">Профиль</h1>
+        <h1 class="glitchSoft" data-text="{{ 'Profile' if g.lang == 'en' else 'Профиль' }}">{{ 'Profile' if g.lang ==
+            'en' else 'Профиль' }}</h1>
         <div class="profile-tabs">
-            <button class="tab-btn active" data-tab="info"><i class="fas fa-user-circle"></i> <span data-en="Info" data-ru="Информация">Информация</span></button>
-            <button class="tab-btn" data-tab="settings"><i class="fas fa-cog"></i> <span data-en="Settings" data-ru="Настройки">Настройки</span></button>
-            <button class="tab-btn" data-tab="deposit"><i class="fas fa-wallet"></i> <span data-en="Deposit" data-ru="Пополнение баланса">Пополнение баланса</span></button>
-            {% if current_user.is_seller %}
-            <button class="tab-btn" data-tab="listings"><i class="fas fa-list"></i> <span data-en="Your Listings" data-ru="Ваши объявления">Ваши объявления</span></button>
-            <button class="tab-btn" data-tab="create-listing"><i class="fas fa-plus-circle"></i> <span data-en="Create Listing" data-ru="Создать объявление">Создать объявление</span></button>
+            <button class="tab-btn active" data-tab="info"><i class="fas fa-user-circle"></i> <span data-en="Info"
+                                                                                                    data-ru="Информация">{{ 'Info' if g.lang == 'en' else 'Информация' }}</span>
+            </button>
+            <button class="tab-btn" data-tab="settings"><i class="fas fa-cog"></i> <span data-en="Settings"
+                                                                                         data-ru="Настройки">{{ 'Settings' if g.lang == 'en' else 'Настройки' }}</span>
+            </button>
+            <button class="tab-btn" data-tab="deposit"><i class="fas fa-wallet"></i> <span data-en="Deposit"
+                                                                                           data-ru="Пополнение баланса">{{ 'Deposit' if g.lang == 'en' else 'Пополнение баланса' }}</span>
+            </button>
+            {% if current_user.is_authenticated and (listings or buyer_listings) %}
+            <button class="tab-btn" data-tab="listings"><i class="fas fa-list"></i> <span data-en="Your Listings"
+                                                                                          data-ru="Ваши объявления">{{ 'Your Listings' if g.lang == 'en' else 'Ваши объявления' }}</span>
+            </button>
+            {% endif %}
+            {% if current_user.is_authenticated and (current_user.is_seller or current_user.is_admin or
+            current_user.is_super_admin) %}
+            <button class="tab-btn" data-tab="create-listing"><i class="fas fa-plus-circle"></i> <span
+                    data-en="Create Listing" data-ru="Создать объявление">{{ 'Create Listing' if g.lang == 'en' else 'Создать объявление' }}</span>
+            </button>
+            {% endif %}
+            {% if current_user.is_authenticated and current_user.is_seller %}
+            <button class="tab-btn" data-tab="reviews"><i class="fas fa-star"></i> <span data-en="Reviews"
+                                                                                         data-ru="Отзывы">{{ 'Reviews' if g.lang == 'en' else 'Отзывы' }}</span>
+            </button>
             {% endif %}
         </div>
 
         <div class="tab-content active" id="info">
             <div class="profile-info">
-                <img src="{{ url_for('static', filename='uploads/' + current_user.avatar) if current_user.avatar else 'https://via.placeholder.com/120' }}" alt="Avatar" class="avatar">
-                <div class="info-item">
-                    <span class="label" data-en="Username" data-ru="Имя пользователя">Имя пользователя</span>
-                    <span class="value">{{ current_user.username }}</span>
+                <div class="avatar-container">
+                    <img src="{{ url_for('static', filename='uploads/' + current_user.avatar) if current_user.avatar else 'https://via.placeholder.com/160' }}"
+                         alt="Avatar" class="avatar">
                 </div>
                 <div class="info-item">
-                    <span class="label" data-en="Bio" data-ru="Био">Био</span>
-                    <span class="value">{{ current_user.bio or ('Нет био' if g.lang == 'ru' else 'No bio yet') }}</span>
+                    <span class="label" data-en="Username" data-ru="Имя пользователя">{{ 'Username' if g.lang == 'en' else 'Имя пользователя' }}</span>
+                    <span class="value highlight">{{ current_user.username }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="label" data-en="Balance" data-ru="Баланс">Баланс</span>
-                    <span class="value">${{ "%.2f" % current_user.balance }}</span>
+                    <span class="label" data-en="Email"
+                          data-ru="Email">{{ 'Email' if g.lang == 'en' else 'Email' }}</span>
+                    <span class="value">{{ current_user.email }}</span>
                 </div>
+                <div class="info-item">
+                    <span class="label" data-en="Bio" data-ru="Био">{{ 'Bio' if g.lang == 'en' else 'Био' }}</span>
+                    <span class="value bio">{{ current_user.bio or ('No bio yet' if g.lang == 'en' else 'Био отсутствует') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label" data-en="Balance" data-ru="Баланс">{{ 'Balance' if g.lang == 'en' else 'Баланс' }}</span>
+                    <span class="value highlight">${{ "%.2f" % current_user.balance }}</span>
+                </div>
+                {% if current_user.is_seller %}
+                <div class="info-item">
+                    <span class="label" data-en="Seller Rating" data-ru="Рейтинг продавца">{{ 'Seller Rating' if g.lang == 'en' else 'Рейтинг продавца' }}</span>
+                    <span class="value seller-rating">
+                        {% for i in range(5) %}
+                        <i class="fas fa-star {{ 'filled' if i < current_user.seller_rating|round(0) else '' }}"></i>
+                        {% endfor %}
+                        ({{ "%.1f" % current_user.seller_rating }})
+                    </span>
+                </div>
+                {% endif %}
+                {% if current_user.is_super_admin %}
+                <div class="info-item">
+                    <span class="label" data-en="Role" data-ru="Роль">{{ 'Role' if g.lang == 'en' else 'Роль' }}</span>
+                    <span class="value role super-admin" data-en="Super Admin" data-ru="Супер-админ">{{ 'Super Admin' if g.lang == 'en' else 'Супер-админ' }}</span>
+                </div>
+                {% elif current_user.is_admin %}
+                <div class="info-item">
+                    <span class="label" data-en="Role" data-ru="Роль">{{ 'Role' if g.lang == 'en' else 'Роль' }}</span>
+                    <span class="value role admin" data-en="Admin" data-ru="Администратор">{{ 'Admin' if g.lang == 'en' else 'Администратор' }}</span>
+                </div>
+                {% endif %}
+                {% if current_user.phone_number %}
+                <div class="info-item">
+                    <span>{{ 'Phone Number' if g.lang == 'en' else 'Номер телефона' }}</span>
+                    <p>{{ current_user.phone_number }}</p>
+                </div>
+                {% endif %}
             </div>
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -67,60 +128,203 @@
         <div class="tab-content" id="settings">
             <form method="POST" enctype="multipart/form-data" class="profile-form">
                 <input type="hidden" name="form_type" value="update_profile">
-                <label for="avatar" class="custom-file-upload"><i class="fas fa-upload"></i> <span data-en="Change Avatar" data-ru="Сменить аватар">Сменить аватар</span></label>
-                <input type="file" name="avatar" id="avatar" accept="image/*">
-                <textarea name="bio" class="auth-input" placeholder="{{ 'Bio (max 200 characters)' if g.lang == 'en' else 'Био (макс. 200 символов)' }}" maxlength="200">{{ current_user.bio or '' }}</textarea>
-                <button type="submit" class="cta" data-en="Save Changes" data-ru="Сохранить изменения">Сохранить изменения</button>
+                <label for="avatar" class="custom-file-upload"><i class="fas fa-upload"></i> <span
+                        data-en="Change Avatar" data-ru="Сменить аватар">{{ 'Change Avatar' if g.lang == 'en' else 'Сменить аватар' }}</span></label>
+                <input type="file" name="avatar" id="avatar">
+                <input type="text" name="username" class="auth-input" value="{{ current_user.username }}"
+                       placeholder="{{ 'Username' if g.lang == 'en' else 'Имя пользователя' }}" required>
+                <input type="email" name="email" class="auth-input" value="{{ current_user.email }}"
+                       placeholder="{{ 'Email' if g.lang == 'en' else 'Email' }}" required>
+                <textarea name="bio" class="bio-input"
+                          placeholder="{{ 'Bio (max 200 characters)' if g.lang == 'en' else 'Био (макс. 200 символов)' }}"
+                          maxlength="200">{{ current_user.bio or '' }}</textarea>
+                <input type="text" id="phone_number" name="phone_number" value="{{ current_user.phone_number or '' }}" class="auth-input" placeholder="+12345678901">
+                {% if current_user.phone_number %}
+                <button type="button" id="remove-phone" class="cta remove">{{ 'Remove Phone Number' if g.lang == 'en' else 'Удалить номер телефона' }}</button>
+                {% endif %}
+                <input type="password" name="password" class="auth-input"
+                       placeholder="{{ 'New Password (optional)' if g.lang == 'en' else 'Новый пароль (опционально)' }}">
+                <button type="submit" class="cta" data-en="Save Changes" data-ru="Сохранить изменения">
+                    {{ 'Save Changes' if g.lang == 'en' else 'Сохранить изменения' }}
+                </button>
             </form>
         </div>
 
         <div class="tab-content" id="deposit">
+            <h3 class="glitchSoft" data-text="{{ 'Deposit' if g.lang == 'en' else 'Пополнение баланса' }}">{{ 'Deposit'
+                if g.lang == 'en' else 'Пополнение баланса' }}</h3>
             <form method="POST" class="profile-form">
                 <input type="hidden" name="form_type" value="deposit">
-                <input type="number" name="amount" class="auth-input" placeholder="{{ 'Amount ($)' if g.lang == 'en' else 'Сумма ($)' }}" step="0.01" min="0.01" required>
-                <button type="submit" class="cta" data-en="Deposit" data-ru="Пополнить">Пополнить</button>
+                <input type="number" name="amount" class="auth-input"
+                       placeholder="{{ 'Amount ($)' if g.lang == 'en' else 'Сумма ($)' }}"
+                       step="0.01" min="0.01" required>
+                <button type="submit" class="cta" data-en="Deposit" data-ru="Пополнить">
+                    {{ 'Deposit' if g.lang == 'en' else 'Пополнить' }}
+                </button>
             </form>
         </div>
 
-        {% if current_user.is_seller %}
+        {% if current_user.is_authenticated and (listings or buyer_listings) %}
         <div class="tab-content" id="listings">
-            <h3 data-en="Your Listings" data-ru="Ваши объявления">Ваши объявления</h3>
+            <h3 class="glitchSoft" data-text="{{ 'Your Listings' if g.lang == 'en' else 'Ваши объявления' }}">{{ 'Your
+                Listings' if g.lang == 'en' else 'Ваши объявления' }}</h3>
             <div class="card-container">
                 {% if listings %}
+                <h4 data-en="Your Created Listings" data-ru="Ваши созданные объявления">{{ 'Your Created Listings' if
+                    g.lang == 'en' else 'Ваши созданные объявления' }}</h4>
                 {% for listing in listings %}
                 <div class="listing-card">
                     {% if listing.image %}
-                    <img src="{{ url_for('static', filename='uploads/' + listing.image) }}" alt="{{ listing.title }}" class="listing-image">
+                    <img src="data:image/jpeg;base64,{{ listing.image }}" alt="{{ listing.title }}"
+                         class="listing-image">
                     {% endif %}
-                    <h4>{{ listing.title }}</h4>
+                    <h4 class="glitchSoft" data-text="{{ listing.title }}">{{ listing.title }}</h4>
                     <p>{{ listing.description }}</p>
                     <p class="price">${{ "%.2f" % listing.price }}</p>
-                    <p><span class="label" data-en="Category" data-ru="Категория">Категория</span>: {{ listing.category }}</p>
+                    <p><span class="label" data-en="Category" data-ru="Категория">{{ 'Category' if g.lang == 'en' else 'Категория' }}</span>:
+                        <span data-en="{{ listing.category }}"
+                              data-ru="{{ {'games': 'Игры', 'items': 'Игровые предметы', 'accounts': 'Аккаунты'}.get(listing.category, 'Неизвестно') }}">
+                           {{ {'games': 'Игры', 'items': 'Игровые предметы', 'accounts': 'Аккаунты'}.get(listing.category, 'Неизвестно') if g.lang == 'ru' else listing.category }}
+                       </span></p>
+                    {% if listing.sold and current_user.id == listing.user_id and listing.buyer_id %}
+                    {% if listing.is_confirmed %}
+                    <p data-en="Purchase confirmed" data-ru="Покупка подтверждена">{{ 'Purchase confirmed' if g.lang ==
+                        'en' else 'Покупка подтверждена' }}</p>
+                    {% else %}
+                    <p data-en="Awaiting buyer confirmation" data-ru="Ожидается подтверждение покупателя">{{ 'Awaiting
+                        buyer confirmation' if g.lang == 'en' else 'Ожидается подтверждение покупателя' }}</p>
+                    {% endif %}
+                    <div class="listing-actions">
+                        <a href="{{ url_for('start_chat', contact_id=listing.buyer_id) }}"
+                           class="action-btn contact-btn">
+                            <i class="fas fa Comments"></i>
+                            <span data-en="Contact Buyer" data-ru="Связаться с покупателем">{{ 'Contact Buyer' if g.lang == 'en' else 'Связаться с покупателем' }}</span>
+                        </a>
+                    </div>
+                    {% elif listing.sold and current_user.id == listing.user_id and not listing.buyer_id %}
+                    <p class="no-listings" data-en="No buyer assigned to this listing."
+                       data-ru="Покупатель для этого объявления не указан.">
+                        {{ 'No buyer assigned to this listing.' if g.lang == 'en' else 'Покупатель для этого объявления
+                        не указан.' }}
+                    </p>
+                    {% endif %}
                 </div>
                 {% endfor %}
-                {% else %}
-                <p data-en="No listings yet." data-ru="У вас пока нет объявлений.">У вас пока нет объявлений.</p>
+                {% endif %}
+                {% if buyer_listings %}
+                <h4 data-en="Your Purchased Listings" data-ru="Ваши купленные объявления">{{ 'Your Purchased Listings'
+                    if g.lang == 'en' else 'Ваши купленные объявления' }}</h4>
+                {% for listing in buyer_listings %}
+                <div class="listing-card">
+                    {% if listing.image %}
+                    <img src="data:image/jpeg;base64,{{ listing.image }}" alt="{{ listing.title }}"
+                         class="listing-image">
+                    {% endif %}
+                    <h4 class="glitchSoft" data-text="{{ listing.title }}">{{ listing.title }}</h4>
+                    <p>{{ listing.description }}</p>
+                    <p class="price">${{ "%.2f" % listing.price }}</p>
+                    <p><span class="label" data-en="Category" data-ru="Категория">{{ 'Category' if g.lang == 'en' else 'Категория' }}</span>:
+                        <span data-en="{{ listing.category }}"
+                              data-ru="{{ {'games': 'Игры', 'items': 'Игровые предметы', 'accounts': 'Аккаунты'}.get(listing.category, 'Неизвестно') }}">
+                           {{ {'games': 'Игры', 'items': 'Игровые предметы', 'accounts': 'Аккаунты'}.get(listing.category, 'Неизвестно') if g.lang == 'ru' else listing.category }}
+                       </span></p>
+                    <div class="listing-actions">
+                        {% if not listing.is_confirmed %}
+                        <form method="POST" action="{{ url_for('confirm_purchase', listing_id=listing.id) }}">
+                            <button type="submit" class="action-btn confirm-btn">
+                                <i class="fas fa-check"></i>
+                                <span data-en="Confirm Purchase" data-ru="Подтвердить покупку">{{ 'Confirm Purchase' if g.lang == 'en' else 'Подтвердить покупку' }}</span>
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('leave_review', listing_id=listing.id) }}" class="action-btn review-btn">
+                            <i class="fas fa-star"></i>
+                            <span data-en="Leave Review" data-ru="Оставить отзыв">{{ 'Leave Review' if g.lang == 'en' else 'Оставить отзыв' }}</span>
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('start_chat', contact_id=listing.user_id) }}"
+                           class="action-btn contact-btn">
+                            <i class="fas fa-comments"></i>
+                            <span data-en="Contact Seller" data-ru="Связаться с продавцом">{{ 'Contact Seller' if g.lang == 'en' else 'Связаться с продавцом' }}</span>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% if not listings and not buyer_listings %}
+                <p class="no-listings" data-en="You have no listings or purchases yet."
+                   data-ru="У вас пока нет объявлений или покупок.">
+                    {{ 'You have no listings or purchases yet.' if g.lang == 'en' else 'У вас пока нет объявлений или
+                    покупок.' }}
+                </p>
                 {% endif %}
             </div>
         </div>
+        {% endif %}
 
+        {% if current_user.is_authenticated and (current_user.is_seller or current_user.is_admin or
+        current_user.is_super_admin) %}
         <div class="tab-content" id="create-listing">
-            <h3 data-en="Create Listing" data-ru="Создать объявление">Создать объявление</h3>
+            <h3 class="glitchSoft" data-text="{{ 'Create Listing' if g.lang == 'en' else 'Создать объявление' }}">{{
+                'Create Listing' if g.lang == 'en' else 'Создать объявление' }}</h3>
             <form method="POST" enctype="multipart/form-data" class="profile-form">
                 <input type="hidden" name="form_type" value="create_listing">
-                <input type="text" name="title" class="auth-input" placeholder="{{ 'Listing Title' if g.lang == 'en' else 'Название объявления' }}" required>
-                <textarea name="description" class="auth-input" placeholder="{{ 'Description' if g.lang == 'en' else 'Описание' }}" required></textarea>
-                <input type="number" name="price" class="auth-input" placeholder="{{ 'Price ($)' if g.lang == 'en' else 'Цена ($)' }}" step="0.01" min="0.01" required>
+                <input type="text" name="title" class="auth-input"
+                       placeholder="{{ 'Listing Title' if g.lang == 'en' else 'Название объявления' }}" required>
+                <textarea name="description" class="bio-input"
+                          placeholder="{{ 'Description' if g.lang == 'en' else 'Описание' }}" required></textarea>
+                <input type="number" name="price" class="auth-input"
+                       placeholder="{{ 'Price ($)' if g.lang == 'en' else 'Цена ($)' }}"
+                       step="0.01" required>
                 <select name="category" class="auth-input" required>
-                    <option value="" disabled selected data-en="Select Category" data-ru="Выберите категорию">Выберите категорию</option>
+                    <option value="" disabled selected data-en="Select Category" data-ru="Выберите категорию">{{ 'Select
+                        Category' if g.lang == 'en' else 'Выберите категорию' }}
+                    </option>
                     {% for key, value in categories.items() %}
-                    <option value="{{ key }}" data-en="{{ value.en }}" data-ru="{{ value.ru }}">{{ value[g.lang] }}</option>
+                    <option value="{{ key }}" data-en="{{ value.en }}" data-ru="{{ value.ru }}">{{ value[g.lang] }}
+                    </option>
                     {% endfor %}
                 </select>
-                <label for="listing-image" class="custom-file-upload"><i class="fas fa-image"></i> <span data-en="Add Image" data-ru="Добавить изображение">Добавить изображение</span></label>
+                <label for="listing-image" class="custom-file-upload"><i class="fas fa-image"></i> <span
+                        data-en="Add Image" data-ru="Добавить изображение">{{ 'Add Image' if g.lang == 'en' else 'Добавить изображение' }}</span></label>
                 <input type="file" name="listing_image" id="listing-image" accept="image/*">
-                <button type="submit" class="cta" data-en="Create Listing" data-ru="Создать объявление">Создать объявление</button>
+                <button type="submit" class="cta" data-en="Create Listing" data-ru="Создать объявление">
+                    {{ 'Create Listing' if g.lang == 'en' else 'Создать объявление' }}
+                </button>
             </form>
+        </div>
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.is_seller %}
+        <div class="tab-content" id="reviews">
+            <h3 class="glitchSoft" data-text="{{ 'Reviews' if g.lang == 'en' else 'Отзывы' }}">{{ 'Reviews' if g.lang ==
+                'en' else 'Отзывы' }}</h3>
+            <div class="card-container">
+                {% if reviews %}
+                {% for review in reviews %}
+                <div class="review-card">
+                    <p><span class="label" data-en="Rating" data-ru="Рейтинг">{{ 'Rating' if g.lang == 'en' else 'Рейтинг' }}</span>:
+                        <span class="seller-rating">
+                            {% for i in range(5) %}
+                            <i class="fas fa-star {{ 'filled' if i < review.rating else '' }}"></i>
+                            {% endfor %}
+                        </span>
+                    </p>
+                    <p><span class="label" data-en="Comment" data-ru="Комментарий">{{ 'Comment' if g.lang == 'en' else 'Комментарий' }}</span>:
+                        {{ review.comment or ('No comment' if g.lang == 'en' else 'Без комментария') }}</p>
+                    <p><span class="label" data-en="By" data-ru="От">{{ 'By' if g.lang == 'en' else 'От' }}</span>:
+                        {{ review.buyer_username }}</p>
+                    <p><span class="label" data-en="Date"
+                             data-ru="Дата">{{ 'Date' if g.lang == 'en' else 'Дата' }}</span>:
+                        {{ review.timestamp }}</p>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="no-listings" data-en="No reviews yet." data-ru="Отзывов пока нет.">
+                    {{ 'No reviews yet.' if g.lang == 'en' else 'Отзывов пока нет.' }}
+                </p>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
     </div>
@@ -128,16 +332,27 @@
 
 <footer>
     <div class="footer-content">
-        <p>© 2025 GameHub. <span data-en="All rights reserved." data-ru="Все права защищены.">{{ 'Все права защищены.' if g.lang == 'ru' else 'All rights reserved.' }}</span></p>
+        <p>© 2025 GameHub. <span data-en="All rights reserved." data-ru="Все права защищены.">{{ 'All rights reserved.' if g.lang == 'en' else 'Все права защищены.' }}</span>
+        </p>
         <div class="footer-links">
-            <a href="{{ url_for('faq') }}" data-en="FAQ" data-ru="FAQ">FAQ</a>
-            <a href="#" data-en="Terms" data-ru="Условия">Условия</a>
-            <a href="#" data-en="Privacy" data-ru="Конфиденциальность">Конфиденциальность</a>
+            <a href="{{ url_for('faq') }}" data-en="FAQ" data-ru="FAQ">{{ 'FAQ' if g.lang == 'en' else 'FAQ' }}</a>
+            <a href="#" data-en="Terms" data-ru="Условия">{{ 'Terms' if g.lang == 'en' else 'Условия' }}</a>
+            <a href="#" data-en="Privacy" data-ru="Конфиденциальность">{{ 'Privacy' if g.lang == 'en' else
+                'Конфиденциальность' }}</a>
         </div>
     </div>
 </footer>
 
 <script src="{{ url_for('static', filename='scripts.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+<script>
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            button.classList.add('active');
+            document.getElementById(button.getAttribute('data-tab')).classList.add('active');
+        });
+    });
+</script>
 </body>
 </html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameHub - {{ user.username }}'s Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body class="lang-{{ g.lang }}">
+<header>
+    <a href="{{ url_for('index') }}" class="logo">GameHub</a>
+    <div class="hamburger"><i class="fas fa-bars"></i></div>
+    <nav>
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">Home</span></a>
+        <a href="{{ url_for('marketplace') }}"><i class="fas fa-shopping-cart"></i> <span data-en="Marketplace"
+                                                                                          data-ru="Маркетплейс">Marketplace</span></a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile"
+                                                                             data-ru="Профиль">Profile</span></a>
+        <a href="{{ url_for('chats') }}"><i class="fas fa-comments"></i> <span data-en="Chats"
+                                                                               data-ru="Чаты">Chats</span></a>
+        {% endif %}
+        <a href="{{ url_for('faq') }}"><i class="fas fa-question-circle"></i> <span data-en="FAQ"
+                                                                                    data-ru="FAQ">FAQ</span></a>
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+        <a href="{{ url_for('admin') }}"><i class="fas fa-tools"></i> <span data-en="Admin" data-ru="Админ">Admin</span></a>
+        {% endif %}
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">Logout</span></a>
+        {% else %}
+        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login"
+                                                                                  data-ru="Вход">Login</span></a>
+        <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span data-en="Register"
+                                                                                   data-ru="Регистрация">Register</span></a>
+        {% endif %}
+        <button id="lang-toggle">{{ 'RU' if g.lang == 'en' else 'EN' }}</button>
+    </nav>
+</header>
+
+<section class="profile">
+    <h1 data-text="{{ user.username }}'s Profile">{{ user.username }}'s Profile</h1>
+
+    <div class="profile-container">
+        <div class="avatar-container">
+            <img src="{{ url_for('static', filename='uploads/' + (user.avatar or 'default_avatar.png')) }}" alt="Avatar"
+                 class="avatar">
+        </div>
+
+        <div class="profile-tabs">
+            <button class="tab-btn active" data-tab="info">{{ 'Info' if g.lang == 'en' else 'Информация' }}</button>
+            <button class="tab-btn" data-tab="listings">{{ 'Listings' if g.lang == 'en' else 'Объявления' }}</button>
+            <button class="tab-btn" data-tab="reviews">{{ 'Reviews' if g.lang == 'en' else 'Отзывы' }}</button>
+        </div>
+
+        <div class="tab-content active" id="info">
+            <div class="profile-info">
+                <div class="info-item">
+                    <span class="label">{{ 'Username' if g.lang == 'en' else 'Имя пользователя' }}</span>
+                    <span class="value">{{ user.username }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">{{ 'Bio' if g.lang == 'en' else 'Био' }}</span>
+                    <span class="value">{{ user.bio or ('No bio yet' if g.lang == 'en' else 'Био отсутствует') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">{{ 'Role' if g.lang == 'en' else 'Роль' }}</span>
+                    <span class="value highlight">{{ role }}</span>
+                </div>
+                {% if user.seller_rating > 0 %}
+                <div class="info-item">
+                    <span class="label">{{ 'Seller Rating' if g.lang == 'en' else 'Рейтинг продавца' }}</span>
+                    <span class="value seller-rating">
+                                {% for i in range(5) %}
+                                    <i class="fas fa-star {{ 'filled' if i < current_user.seller_rating|round(0) else '' }}"></i>
+                                {% endfor %}
+                                ({{ "%.1f" % user.seller_rating }})
+                            </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tab-content" id="listings">
+            {% if listings %}
+            <h2>{{ 'Listings' if g.lang == 'en' else 'Объявления' }}</h2>
+            <div class="card-container listings">
+                {% for listing in listings %}
+                <div class="listing-card">
+                    {% if listing.image %}
+                    <img src="data:image/jpeg;base64,{{ listing.image }}" alt="{{ listing.title }}"
+                         class="listing-image">
+                    {% endif %}
+                    <h4 data-text="{{ listing.title }}">{{ listing.title }}</h4>
+                    <p>{{ listing.description|truncate(100) }}</p>
+                    <p class="price">${{ "%.2f" % listing.price }}</p>
+                    <p>{{ 'Category' if g.lang == 'en' else 'Категория' }}:
+                        <i class="fas {{ 'fa-user' if listing.category == 'Accounts' or listing.category == 'Аккаунты' else 'fa-box' if listing.category == 'Items' or listing.category == 'Предметы' else 'fa-tools' if listing.category == 'Services' or listing.category == 'Услуги' else 'fa-question' }} category-icon"></i>
+                        {{ listing.category }}
+                    </p>
+                    <p>{{ 'Status' if g.lang == 'en' else 'Статус' }}: {{ 'Sold' if listing.sold else 'Active' if g.lang
+                        == 'en' else 'Продано' if listing.sold else 'Активно' }}</p>
+                    <div class="listing-actions">
+                        <a href="{{ url_for('marketplace') }}?search={{ listing.title }}" class="action-btn">
+                            {{ 'View Details' if g.lang == 'en' else 'Подробности' }}
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="no-listings">{{ 'No listings yet.' if g.lang == 'en' else 'Объявлений пока нет.' }}</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-content" id="reviews">
+            {% if reviews %}
+            <h2>{{ 'Reviews' if g.lang == 'en' else 'Отзывы' }}</h2>
+            <div class="card-container">
+                {% for review in reviews %}
+                <div class="review-card">
+                    <p>
+                        {{ 'Rating' if g.lang == 'en' else 'Рейтинг' }}:
+                        {% for i in range(5) %}
+                        <i class="fas fa-star {% if i < user.seller_rating %}filled{% endif %}"></i>
+                        {% endfor %}
+                    </p>
+                    <p>
+                        {{ 'Comment' if g.lang == 'en' else 'Комментарий' }}:
+                        {{ review.comment or ('No comment' if g.lang == 'en' else 'Без комментария') }}
+                    </p>
+                    <p>{{ 'By' if g.lang == 'en' else 'От' }}: {{ review.buyer_username }}</p>
+                    <p>{{ 'Date' if g.lang == 'en' else 'Дата' }}: {{ review.timestamp }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="no-listings">{{ 'No reviews yet.' if g.lang == 'en' else 'Отзывов пока нет.' }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <p class="flash-{{ category }}">{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</section>
+
+<footer>
+    <div class="footer-content">
+        <p>© 2025 GameHub. {{ 'All rights reserved.' if g.lang == 'en' else 'Все права защищены.' }}</p>
+        <div class="footer-links">
+            <a href="{{ url_for('faq') }}">{{ 'FAQ' if g.lang == 'en' else 'FAQ' }}</a>
+            <a href="#">{{ 'Terms' if g.lang == 'en' else 'Условия' }}</a>
+            <a href="#">{{ 'Privacy' if g.lang == 'en' else 'Конфиденциальность' }}</a>
+        </div>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+<script>
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            button.classList.add('active');
+            const targetContent = document.getElementById(button.dataset.tab);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+</script>
+</body>
+</html>

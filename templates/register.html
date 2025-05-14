@@ -1,27 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ 'ru' if g.lang == 'ru' else 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameHub - Register</title>
+    <title>GameHub - {{ 'Register' if g.lang == 'en' else 'Регистрация' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 </head>
-<body>
-<div id="particles-js"></div>
-
+<body class="lang-{{ 'ru' if g.lang == 'ru' else 'en' }}">
 <header>
-    <div class="logo">GameHub</div>
+    <a href="{{ url_for('index') }}" class="logo">GameHub</a>
+    <div class="hamburger"><i class="fas fa-bars"></i></div>
     <nav>
-        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">Главная</span></a>
-        <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile" data-ru="Профиль">Профиль</span></a>
-        <a href="{{ url_for('faq') }}"><i class="fas fa-question-circle"></i> <span data-en="FAQ" data-ru="FAQ">FAQ</span></a>
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">{{ 'Home' if g.lang == 'en' else 'Главная' }}</span></a>
+        <a href="{{ url_for('marketplace') }}"><i class="fas fa-shopping-cart"></i> <span data-en="Marketplace"
+                                                                                          data-ru="Маркетплейс">{{ 'Marketplace' if g.lang == 'en' else 'Маркетплейс' }}</span></a>
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">Выход</span></a>
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">{{ 'Logout' if g.lang == 'en' else 'Выход' }}</span></a>
         {% else %}
-        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login" data-ru="Вход">Вход</span></a>
-        <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span data-en="Register" data-ru="Регистрация">Регистрация</span></a>
+        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login"
+                                                                                  data-ru="Вход">Login</span></a>
         {% endif %}
         <button id="lang-toggle">{{ 'RU' if g.lang == 'en' else 'EN' }}</button>
     </nav>
@@ -29,15 +27,22 @@
 </header>
 
 <section class="auth-form">
-    <h1 data-en="Register" data-ru="Регистрация">Register</h1>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" data-en="Username" data-ru="Имя пользователя" class="auth-input" required>
-        <input type="email" name="email" placeholder="Email" data-en="Email" data-ru="Электронная почта" class="auth-input" required>
-        <input type="password" name="password" placeholder="Password" data-en="Password" data-ru="Пароль" class="auth-input" required>
-        <input type="password" name="confirm_password" placeholder="Confirm Password" data-en="Confirm Password" data-ru="Подтвердите пароль" class="auth-input" required>
-        <button type="submit" class="cta" data-en="Register" data-ru="Зарегистрироваться">Register</button>
+    <h1 data-text="{{ 'Register' if g.lang == 'en' else 'Регистрация' }}">{{ 'Register' if g.lang == 'en' else
+        'Регистрация' }}</h1>
+    <form method="POST" action="{{ url_for('register') }}" id="register-form">
+        <input type="text" name="username" class="auth-input"
+               placeholder="{{ 'Username' if g.lang == 'en' else 'Имя пользователя' }}" required minlength="4">
+        <input type="email" name="email" class="auth-input"
+               placeholder="{{ 'Email' if g.lang == 'en' else 'Электронная почта' }}" required>
+        <input type="password" name="password" class="auth-input"
+               placeholder="{{ 'Password' if g.lang == 'en' else 'Пароль' }}" required id="password" minlength="6">
+        <input type="password" name="confirm_password" class="auth-input"
+               placeholder="{{ 'Confirm Password' if g.lang == 'en' else 'Подтвердите пароль' }}" required>
+        <button type="submit" class="cta">{{ 'Register' if g.lang == 'en' else 'Зарегистрироваться' }}</button>
     </form>
-    <p data-en="Already have an account?" data-ru="Уже есть аккаунт?">Already have an account? <a href="/login" data-en="Login here" data-ru="Войдите здесь">Login here</a></p>
+    <p>{{ 'Already have an account?' if g.lang == 'en' else 'Уже есть аккаунт?' }} <a href="{{ url_for('login') }}">{{
+        'Login here' if g.lang == 'en' else 'Войдите здесь' }}</a></p>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     {% for category, message in messages %}
