@@ -583,9 +583,104 @@ def marketplace():
     pass
 
 
-@app.route("/chats")
+@app.route("/start_chat/<int:contact_id>")
+@login_required
+def start_chat(contact_id):
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            c = conn.cursor()
+            c.execute("SELECT id, username FROM users WHERE id = ?", (contact_id,))
+            if not c.fetchone():
+                flash("User not found.", "error")
+                return redirect(url_for("chats"))
+            return redirect(url_for("chats", contact_id=contact_id))
+    except Exception as e:
+        flash(f"Error starting chat: {e}", "error")
+        return redirect(url_for("chats"))
+
+
+@app.route("/chats", methods=["GET", "POST"])
+@login_required
 def chats():
-    pass
+    try:
+        contact_id = request.args.get("contact_id", type=int)
+        with sqlite3.connect(DATABASE) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            c.execute(
+                "SELECT DISTINCT u.id, u.username, u.avatar "
+                "FROM users u JOIN messages m ON (u.id = m.sender_id OR u.id = m.receiver_id) "
+                "WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?",
+                (current_user.id, current_user.id, current_user.id)
+            )
+            contacts = [
+                {
+                    "id": row["id"],
+                    "username": row["username"],
+                    "avatar": row["avatar"] or "default_avatar.png",
+                    "active": contact_id == row["id"] if contact_id else False
+                } for row in c.fetchall()
+            ]
+            if contact_id and not any(contact["id"] == contact_id for contact in contacts):
+                c.execute("SELECT id, username, avatar FROM users WHERE id = ?", (contact_id,))
+                contact = c.fetchone()
+                if contact:
+                    contacts.append({
+                        "id": contact["id"],
+                        "username": contact["username"],
+                        "avatar": contact["avatar"] or "default_avatar.png",
+                        "active": True
+                    })
+            messages = []
+            if contact_id:
+                c.execute(
+                    "SELECT m.id, m.sender_id, m.receiver_id, m.content, m.timestamp, u.username as sender_name "
+                    "FROM messages m JOIN users u ON m.sender_id = u.id "
+                    "WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?) "
+                    "ORDER BY m.timestamp",
+                    (current_user.id, contact_id, contact_id, current_user.id)
+                )
+                messages = [
+                    {
+                        "id": row["id"],
+                        "sender_id": row["sender_id"],
+                        "receiver_id": row["receiver_id"],
+                        "content": row["content"],
+                        "timestamp": row["timestamp"],
+                        "sender_name": row["sender_name"]
+                    } for row in c.fetchall()
+                ]
+        return render_template("chats.html", contacts=contacts, messages=messages, active_contact=contact_id)
+    except Exception as e:
+        flash(f"Error loading chats: {e}", "error")
+        return render_template("chats.html", contacts=[], messages=[], active_contact=None)
+
+
+@app.route("/send_message/<int:receiver_id>", methods=["POST"])
+@login_required
+def send_message(receiver_id):
+    try:
+        content = request.form.get("content", "").strip()
+        if not content:
+            flash("Message cannot be empty.", "error")
+            return redirect(url_for("chats", contact_id=receiver_id))
+        with sqlite3.connect(DATABASE) as conn:
+            c = conn.cursor()
+            c.execute("SELECT id FROM users WHERE id = ?", (receiver_id,))
+            if not c.fetchone():
+                flash("Recipient not found.", "error")
+                return redirect(url_for("chats"))
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+            c.execute(
+                "INSERT INTO messages (sender_id, receiver_id, content, timestamp) VALUES (?, ?, ?, ?)",
+                (current_user.id, receiver_id, content, timestamp)
+            )
+            conn.commit()
+            flash("Message sent!", "success")
+        return redirect(url_for("chats", contact_id=receiver_id))
+    except Exception as e:
+        flash(f"Error sending message: {e}", "error")
+        return redirect(url_for("chats", contact_id=receiver_id))
 
 
 @app.route("/faq")
