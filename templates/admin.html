@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="{{ 'ru' if g.lang == 'ru' else 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Админ-панель' if g.lang == 'ru' else 'Admin Panel' }} - GameHub</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body class="{{ 'lang-ru' if g.lang == 'ru' else 'lang-en' }}">
+<header>
+    <div class="logo">GameHub</div>
+    <nav>
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">Home</span></a>
+        <a href="{{ url_for('marketplace') }}"><i class="fas fa-shopping-cart"></i> <span data-en="Marketplace"
+                                                                                          data-ru="Маркетплейс">Marketplace</span></a>
+        <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile"
+                                                                             data-ru="Профиль">Profile</span></a>
+        <a href="{{ url_for('chats') }}"><i class="fas fa-comments"></i> <span data-en="Chats"
+                                                                               data-ru="Чаты">Chats</span></a>
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+        <a href="{{ url_for('admin') }}"><i class="fas fa-tools"></i> <span data-en="Admin" data-ru="Админ">Admin</span></a>
+        {% endif %}
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">Logout</span></a>
+        {% else %}
+        <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-en="Login"
+                                                                                  data-ru="Вход">Login</span></a>
+        <a href="{{ url_for('register') }}"><i class="fas fa-user-plus"></i> <span data-en="Register"
+                                                                                   data-ru="Регистрация">Register</span></a>
+        {% endif %}
+        <button id="lang-toggle">{{ 'RU' if g.lang == 'en' else 'EN' }}</button>
+    </nav>
+    <div class="hamburger"><i class="fas fa-bars"></i></div>
+</header>
+
+<section class="admin-panel">
+    <div class="admin-container">
+        <h1 class="glitchSoft" data-text="{{ 'Админ-панель' if g.lang == 'ru' else 'Admin Panel' }}">
+            {{ 'Админ-панель' if g.lang == 'ru' else 'Admin Panel' }}
+        </h1>
+
+        <div class="admin-tabs">
+            {% if current_user.is_super_admin %}
+            <button class="tab-btn active" data-tab="users">
+                <i class="fas fa-users"></i> {{ 'Пользователи' if g.lang == 'ru' else 'Users' }}
+            </button>
+            {% endif %}
+            <button class="tab-btn {% if not current_user.is_super_admin %}active{% endif %}" data-tab="listings">
+                <i class="fas fa-list"></i> {{ 'Объявления' if g.lang == 'ru' else 'Listings' }}
+            </button>
+        </div>
+
+        {% if current_user.is_super_admin %}
+        <div class="tab-content active" id="users">
+            <div class="admin-controls">
+                <input type="text" id="user-search" class="auth-input"
+                       placeholder="{{ 'Поиск пользователей...' if g.lang == 'ru' else 'Search users...' }}"
+                       value="{{ user_search or '' }}">
+                <select id="user-filter" class="auth-input">
+                    <option value="all" {% if user_filter==
+                    'all' %}selected{% endif %}>
+                    {{ 'Все' if g.lang == 'ru' else 'All' }}
+                    </option>
+                    <option value="admins" {% if user_filter==
+                    'admins' %}selected{% endif %}>
+                    {{ 'Админы' if g.lang == 'ru' else 'Admins' }}
+                    </option>
+                    <option value="super_admins" {% if user_filter==
+                    'super_admins' %}selected{% endif %}>
+                    {{ 'Супер-админы' if g.lang == 'ru' else 'Super Admins' }}
+                    </option>
+                    <option value="sellers" {% if user_filter==
+                    'sellers' %}selected{% endif %}>
+                    {{ 'Продавцы' if g.lang == 'ru' else 'Sellers' }}
+                    </option>
+                </select>
+                <button id="apply-user-filter" class="cta">
+                    {{ 'Применить' if g.lang == 'ru' else 'Apply' }}
+                </button>
+            </div>
+
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>{{ 'Имя' if g.lang == 'ru' else 'Username' }}</th>
+                        <th>Email</th>
+                        <th>{{ 'Роли' if g.lang == 'ru' else 'Roles' }}</th>
+                        <th>{{ 'Рейтинг' if g.lang == 'ru' else 'Rating' }}</th>
+                        <th>{{ 'Баланс' if g.lang == 'ru' else 'Balance' }}</th>
+                        <th>{{ 'Действия' if g.lang == 'ru' else 'Actions' }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.is_super_admin %}
+                            <span class="role super-admin">{{ 'Супер-админ' if g.lang == 'ru' else 'Super Admin' }}</span>
+                            {% endif %}
+                            {% if user.is_admin and not user.is_super_admin %}
+                            <span class="role admin">{{ 'Админ' if g.lang == 'ru' else 'Admin' }}</span>
+                            {% endif %}
+                            {% if user.is_seller %}
+                            <span class="role seller">{{ 'Продавец' if g.lang == 'ru' else 'Seller' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="seller-rating">
+                                {% for i in range(5) %}
+                                <i class="fas fa-star {% if i < user.seller_rating %}filled{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>${{ "%.2f"|format(user.balance) }}</td>
+                        <td>
+                            <select class="action-select" data-user-id="{{ user.id }}"
+                                    onchange="handleUserAction(this)">
+                                <option value="">{{ 'Выберите' if g.lang == 'ru' else 'Select' }}</option>
+                                {% if current_user.username == 'superadmin' %}
+                                <option value="toggle_admin">{{ 'Переключить админа' if g.lang == 'ru' else 'Toggle
+                                    Admin' }}
+                                </option>
+                                <option value="toggle_super_admin">{{ 'Переключить супер-админа' if g.lang == 'ru' else
+                                    'Toggle Super Admin' }}
+                                </option>
+                                {% endif %}
+                                <option value="toggle_seller">{{ 'Переключить продавца' if g.lang == 'ru' else 'Toggle
+                                    Seller' }}
+                                </option>
+                                <option value="adjust_balance">{{ 'Изменить баланс' if g.lang == 'ru' else 'Adjust
+                                    Balance' }}
+                                </option>
+                                {% if current_user.username == 'superadmin' %}
+                                <option value="delete_user">{{ 'Удалить' if g.lang == 'ru' else 'Delete' }}</option>
+                                {% endif %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if total_pages > 1 %}
+            <div class="pagination">
+                {% for p in range(1, total_pages + 1) %}
+                <a href="{{ url_for('admin', page=p, user_search=user_search, user_filter=user_filter,
+                                  listing_search=listing_search, listing_filter=listing_filter) }}"
+                   class="{% if p == page %}active{% endif %}">
+                    {{ p }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="tab-content {% if not current_user.is_super_admin %}active{% endif %}" id="listings">
+            <div class="admin-controls">
+                <input type="text" id="listing-search" class="auth-input"
+                       placeholder="{{ 'Поиск объявлений...' if g.lang == 'ru' else 'Search listings...' }}"
+                       value="{{ listing_search or '' }}">
+                <select id="listing-filter" class="auth-input">
+                    <option value="all" {% if listing_filter==
+                    'all' %}selected{% endif %}>
+                    {{ 'Все' if g.lang == 'ru' else 'All' }}
+                    </option>
+                    <option value="active" {% if listing_filter==
+                    'active' %}selected{% endif %}>
+                    {{ 'Активные' if g.lang == 'ru' else 'Active' }}
+                    </option>
+                    <option value="sold" {% if listing_filter==
+                    'sold' %}selected{% endif %}>
+                    {{ 'Проданные' if g.lang == 'ru' else 'Sold' }}
+                    </option>
+                </select>
+                <button id="apply-listing-filter" class="cta">
+                    {{ 'Применить' if g.lang == 'ru' else 'Apply' }}
+                </button>
+            </div>
+
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>{{ 'Название' if g.lang == 'ru' else 'Title' }}</th>
+                        <th>{{ 'Цена' if g.lang == 'ru' else 'Price' }}</th>
+                        <th>{{ 'Продавец' if g.lang == 'ru' else 'Seller' }}</th>
+                        <th>{{ 'Статус' if g.lang == 'ru' else 'Status' }}</th>
+                        <th>{{ 'Категория' if g.lang == 'ru' else 'Category' }}</th>
+                        <th>{{ 'Действия' if g.lang == 'ru' else 'Actions' }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for listing in listings %}
+                    <tr>
+                        <td>{{ listing.id }}</td>
+                        <td>{{ listing.title }}</td>
+                        <td>${{ "%.2f"|format(listing.price) }}</td>
+                        <td>{{ listing.seller }}</td>
+                        <td>
+                            {% if listing.sold %}
+                            <span class="sold">{{ 'Продано' if g.lang == 'ru' else 'Sold' }}</span>
+                            {% else %}
+                            <span class="active">{{ 'Активно' if g.lang == 'ru' else 'Active' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ listing.category }}</td>
+                        <td>
+                            <select class="action-select" data-listing-id="{{ listing.id }}"
+                                    onchange="handleListingAction(this)">
+                                <option value="">{{ 'Выберите' if g.lang == 'ru' else 'Select' }}</option>
+                                <option value="delete_listing">{{ 'Удалить' if g.lang == 'ru' else 'Delete' }}</option>
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h3 id="modal-title"></h3>
+                <p id="modal-message"></p>
+                <div id="modal-form-container" style="display: none;">
+                    <form id="modal-form" method="POST">
+                        <input type="hidden" name="action" id="modal-action">
+                        <input type="hidden" name="user_id" id="modal-user-id">
+                        <input type="hidden" name="listing_id" id="modal-listing-id">
+                        <div id="modal-inputs"></div>
+                        <button type="submit" class="cta">{{ 'Подтвердить' if g.lang == 'ru' else 'Confirm' }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.getElementById('apply-user-filter')?.addEventListener('click', function() {
+            const search = document.getElementById('user-search').value;
+            const filter = document.getElementById('user-filter').value;
+            window.location.href = `/admin?user_search=${encodeURIComponent(search)}&user_filter=${filter}`;
+        });
+
+        document.getElementById('apply-listing-filter')?.addEventListener('click', function() {
+            const search = document.getElementById('listing-search').value;
+            const filter = document.getElementById('listing-filter').value;
+            window.location.href = `/admin?listing_search=${encodeURIComponent(search)}&listing_filter=${filter}`;
+        });
+
+        const modal = document.getElementById('modal');
+        const modalClose = document.querySelector('.modal-close');
+
+        modalClose.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+
+    function handleUserAction(select) {
+        const action = select.value;
+        const userId = select.dataset.userId;
+
+        if (!action) return;
+
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalFormContainer = document.getElementById('modal-form-container');
+        const modalAction = document.getElementById('modal-action');
+        const modalUserId = document.getElementById('modal-user-id');
+        const modalInputs = document.getElementById('modal-inputs');
+
+        modalAction.value = action;
+        modalUserId.value = userId;
+        modalInputs.innerHTML = '';
+
+        const lang = document.body.classList.contains('lang-ru') ? 'ru' : 'en';
+
+        if (action === 'delete_user') {
+            modalTitle.textContent = lang === 'ru' ? 'Удалить пользователя' : 'Delete User';
+            modalMessage.textContent = lang === 'ru' ?
+            `Вы уверены, что хотите удалить пользователя с ID ${userId}?` :
+            `Are you sure you want to delete user with ID ${userId}?`;
+            modalFormContainer.style.display = 'block';
+        }
+        else if (action === 'toggle_admin') {
+            modalTitle.textContent = lang === 'ru' ? 'Переключить статус админа' : 'Toggle Admin Status';
+            modalMessage.textContent = lang === 'ru' ?
+            `Переключить статус администратора для пользователя с ID ${userId}?` :
+            `Toggle admin status for user with ID ${userId}?`;
+            modalFormContainer.style.display = 'block';
+        }
+        else if (action === 'toggle_super_admin') {
+            modalTitle.textContent = lang === 'ru' ? 'Переключить статус супер-админа' : 'Toggle Super Admin Status';
+            modalMessage.textContent = lang === 'ru' ?
+            `Переключить статус супер-администратора для пользователя с ID ${userId}?` :
+            `Toggle super admin status for user with ID ${userId}?`;
+            modalFormContainer.style.display = 'block';
+        }
+        else if (action === 'toggle_seller') {
+            modalTitle.textContent = lang === 'ru' ? 'Переключить статус продавца' : 'Toggle Seller Status';
+            modalMessage.textContent = lang === 'ru' ?
+            `Переключить статус продавца для пользователя с ID ${userId}?` :
+            `Toggle seller status for user with ID ${userId}?`;
+            modalFormContainer.style.display = 'block';
+        }
+        else if (action === 'adjust_balance') {
+            modalTitle.textContent = lang === 'ru' ? 'Изменить баланс' : 'Adjust Balance';
+            modalMessage.textContent = lang === 'ru' ?
+            'Введите сумму для изменения баланса:' :
+            'Enter the amount to adjust the balance by:';
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.name = 'amount';
+            input.step = '0.01';
+            input.placeholder = lang === 'ru' ? 'Сумма ($)' : 'Amount ($)';
+            input.className = 'auth-input';
+            input.required = true;
+
+            modalInputs.appendChild(input);
+            modalFormContainer.style.display = 'block';
+        }
+
+        select.value = '';
+        modal.style.display = 'block';
+    }
+
+    function handleListingAction(select) {
+        const action = select.value;
+        const listingId = select.dataset.listingId;
+
+        if (!action) return;
+
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalFormContainer = document.getElementById('modal-form-container');
+        const modalAction = document.getElementById('modal-action');
+        const modalListingId = document.getElementById('modal-listing-id');
+
+        modalAction.value = action;
+        modalListingId.value = listingId;
+
+        const lang = document.body.classList.contains('lang-ru') ? 'ru' : 'en';
+
+        if (action === 'delete_listing') {
+            modalTitle.textContent = lang === 'ru' ? 'Удалить объявление' : 'Delete Listing';
+            modalMessage.textContent = lang === 'ru' ?
+            `Вы уверены, что хотите удалить объявление с ID ${listingId}?` :
+            `Are you sure you want to delete listing with ID ${listingId}?`;
+            modalFormContainer.style.display = 'block';
+        }
+
+        select.value = '';
+        modal.style.display = 'block';
+    }
+</script>
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

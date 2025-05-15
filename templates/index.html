@@ -105,9 +105,7 @@
         <p>© 2025 GameHub. <span data-en="All rights reserved." data-ru="Все права защищены.">{{ 'Все права защищены.' if g.lang == 'ru' else 'All rights reserved.' }}</span>
         </p>
         <div class="footer-links">
-            <a href="{{ url_for('faq') }}" data-en="FAQ" data-ru="FAQ">FAQ</a>
-            <a href="#" data-en="Terms" data-ru="Условия">Terms</a>
-            <a href="#" data-en="Privacy" data-ru="Конфиденциальность">Privacy</a>
+            <a href="{{ url_for('faq') }}">{{ 'FAQ' if g.lang == 'en' else 'FAQ' }}</a>
         </div>
     </div>
 </footer>

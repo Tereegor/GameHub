@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="{{ g.lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameHub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body class="lang-{{ g.lang }}">
+<header>
+  <a href="{{ url_for('index') }}" class="logo">GameHub</a>
+  <nav>
+    <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">Home</span></a>
+    a href="{{ url_for('marketplace') }}"><i class="fas fa-shopping-cart"></i> <span data-en="Marketplace" data-ru="Маркетплейс">Marketplace</span></a>
+    <a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> <span data-en="Profile" data-ru="Профиль">Profile</span></a>
+    <a href="{{ url_for('chats') }}"><i class="fas fa-comments"></i> <span data-en="Chats" data-ru="Чаты">Chats</span></a>
+    <a href="{{ url_for('faq') }}"><i class="fas fa-question-circle"></i> <span data-en="FAQ" data-ru="FAQ">FAQ</span></a>
+    {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+    <a href="{{ url_for('admin') }}"><i class="fas fa-tools"></i> <span data-en="Admin" data-ru="Админ">Admin</span></a>
+    {% endif %}
+    <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> <span data-en="Logout" data-ru="Выход">Logout</span></a>
+    <button id="lang-toggle">{{ 'RU' if g.lang == 'en' else 'EN' }}</button>
+  </nav>
+  <div class="hamburger"><i class="fas fa-bars"></i></div>
+</header>
+
+<section class="leave-review">
+  <h1>{{ 'Leave Review' if g.lang == 'en' else 'Оставить отзыв' }}</h1>
+
+  <div class="review-container">
+    <form method="POST" action="{{ url_for('leave_review', listing_id=listing_id) }}" class="review-form">
+      <label for="rating">{{ 'Rating' if g.lang == 'en' else 'Рейтинг' }}</label>
+      <select id="rating" name="rating" class="custom-select" required>
+        <option value="">{{ 'Select rating' if g.lang == 'en' else 'Выберите рейтинг' }}</option>
+        <option value="5">5 {{ 'Stars' if g.lang == 'en' else 'Звезд' }}</option>
+        <option value="4">4 {{ 'Stars' if g.lang == 'en' else 'Звезды' }}</option>
+        <option value="3">3 {{ 'Stars' if g.lang == 'en' else 'Звезды' }}</option>
+        <option value="2">2 {{ 'Stars' if g.lang == 'en' else 'Звезды' }}</option>
+        <option value="1">1 {{ 'Star' if g.lang == 'en' else 'Звезда' }}</option>
+      </select>
+
+      <label for="comment">{{ 'Comment' if g.lang == 'en' else 'Комментарий' }}</label>
+      <textarea id="comment" name="comment" rows="5" class="auth-input"></textarea>
+
+      <button type="submit" class="cta">{{ 'Submit Review' if g.lang == 'en' else 'Отправить отзыв' }}</button>
+    </form>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <p class="flash-{{ category }}">{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+  </div>
+</section>
+
+<footer>
+  <div class="footer-content">
+    <p>© 2025 GameHub. {{ 'All rights reserved.' if g.lang == 'en' else 'Все права защищены.' }}</p>
+    <div class="footer-links">
+      <a href="{{ url_for('faq') }}">{{ 'FAQ' if g.lang == 'en' else 'FAQ' }}</a>
+    </div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

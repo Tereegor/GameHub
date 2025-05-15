@@ -3,7 +3,7 @@ import logging
 import os
 import re
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Flask, render_template, request, redirect, url_for, flash, g, make_response
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -186,6 +186,21 @@ def validate_phone_number(phone):
 
 def is_valid_password(password):
     return len(password) >= 6 and re.search(r"[A-Za-z]", password) and re.search(r"[0-9]", password)
+
+
+def get_buyer_id(listing_id):
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            c = conn.cursor()
+            c.execute("SELECT buyer_id FROM listings WHERE id = ?", (listing_id,))
+            result = c.fetchone()
+            return result[0] if result else None
+    except sqlite3.Error as e:
+        logger.error(f"Error in get_buyer_id for listing {listing_id}: {e}")
+        return None
+
+
+app.jinja_env.globals.update(get_buyer_id=get_buyer_id)
 
 
 @app.before_request
@@ -575,15 +590,269 @@ def logout():
     return response
 
 
+@app.route("/marketplace")
+def marketplace():
+    search = request.args.get("search", "")
+    category = request.args.get("category", "")
+    sort = request.args.get("sort", "timestamp_desc")
+    page = max(1, request.args.get("page", 1, type=int))
+    listings_per_page = 12
+    offset = (page - 1) * listings_per_page
+
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    count_query = """
+        SELECT COUNT(*)
+        FROM listings l
+        WHERE l.sold = 0
+          AND (? = '' OR l.title LIKE ? OR l.description LIKE ?)
+          AND (? = '' OR l.category = ?)
+    """
+    count_params = (search, f"%{search}%", f"%{search}%", category, category)
+    c.execute(count_query, count_params)
+    total_listings = c.fetchone()[0]
+    total_pages = (total_listings + listings_per_page - 1) // listings_per_page
+
+    query = """
+        SELECT l.id, l.title, l.description, l.price, u.username AS seller, l.image, l.sold, l.category, 
+               u.is_seller, u.seller_rating, l.timestamp, l.user_id
+        FROM listings l
+        JOIN users u ON l.user_id = u.id
+        WHERE l.sold = 0
+          AND (? = '' OR l.title LIKE ? OR l.description LIKE ?)
+          AND (? = '' OR l.category = ?)
+        ORDER BY
+          CASE WHEN ? = 'timestamp_desc' THEN l.timestamp END DESC,
+          CASE WHEN ? = 'timestamp_asc' THEN l.timestamp END ASC,
+          CASE WHEN ? = 'price_asc' THEN l.price END ASC,
+          CASE WHEN ? = 'price_desc' THEN l.price END DESC
+        LIMIT ? OFFSET ?
+    """
+    params = (
+        search, f"%{search}%", f"%{search}%", category, category, sort, sort, sort, sort, listings_per_page, offset)
+    c.execute(query, params)
+    listings = [
+        {
+            "id": listing[0],
+            "title": listing[1],
+            "description": listing[2],
+            "price": float(listing[3]),
+            "seller": listing[4],
+            "image": listing[5],
+            "sold": bool(listing[6]),
+            "category": CATEGORIES.get(listing[7], {"en": "Unknown", "ru": "Неизвестно"})[g.lang],
+            "is_seller": bool(listing[8]),
+            "seller_rating": float(listing[9]),
+            "timestamp": listing[10],
+            "user_id": listing[11]
+        } for listing in c.fetchall()
+    ]
+    conn.close()
+    return render_template(
+        "marketplace.html", listings=listings, categories=CATEGORIES,
+        total_pages=total_pages, current_page=page
+    )
+
+
+@app.route("/buy_listing/<int:listing_id>", methods=["POST"])
+@login_required
+def buy_listing(listing_id):
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            c = conn.cursor()
+            c.execute("SELECT user_id, price, sold FROM listings WHERE id = ?", (listing_id,))
+            listing = c.fetchone()
+            if not listing:
+                flash("Listing not found.", "error")
+            elif listing[2] == 1:
+                flash("Listing already sold.", "error")
+            elif listing[0] == current_user.id:
+                flash("Cannot buy your own listing.", "error")
+            else:
+                c.execute("SELECT balance FROM users WHERE id = ?", (current_user.id,))
+                buyer_balance = c.fetchone()[0]
+                if buyer_balance < listing[1]:
+                    flash("Insufficient funds.", "error")
+                else:
+                    deadline = (datetime.utcnow() + timedelta(days=7)).isoformat()
+                    c.execute("UPDATE users SET balance = balance - ? WHERE id = ?", (listing[1], current_user.id))
+                    c.execute(
+                        "UPDATE listings SET sold = 1, buyer_id = ?, confirmation_deadline = ? WHERE id = ?",
+                        (current_user.id, deadline, listing_id)
+                    )
+                    c.execute("SELECT sold, buyer_id FROM listings WHERE id = ?", (listing_id,))
+                    updated = c.fetchone()
+                    if updated[0] != 1 or updated[1] != current_user.id:
+                        conn.rollback()
+                        flash("Failed to update listing.", "error")
+                        return redirect(url_for("marketplace"))
+                    conn.commit()
+                    flash("Purchase successful! Confirm within 7 days.", "success")
+    except Exception as e:
+        flash(f"Purchase error: {e}", "error")
+    return redirect(url_for("marketplace"))
+
+
+@app.route("/confirm_purchase/<int:listing_id>", methods=["POST"])
+@login_required
+def confirm_purchase(listing_id):
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            c = conn.cursor()
+            c.execute(
+                "SELECT user_id, buyer_id, price, is_confirmed, confirmation_deadline "
+                "FROM listings WHERE id = ?",
+                (listing_id,)
+            )
+            listing = c.fetchone()
+            if not listing:
+                flash("Listing not found.", "error")
+            elif listing[1] != current_user.id:
+                flash("You are not the buyer.", "error")
+            elif listing[3]:
+                flash("Purchase already confirmed.", "error")
+            else:
+                deadline = datetime.fromisoformat(listing[4]) if listing[4] else None
+                if deadline and datetime.utcnow() > deadline:
+                    flash("Confirmation deadline expired.", "error")
+                else:
+                    c.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (listing[2], listing[0]))
+                    c.execute("UPDATE listings SET is_confirmed = 1 WHERE id = ?", (listing_id,))
+                    conn.commit()
+                    flash("Purchase confirmed! You can now leave a review.", "success")
+    except Exception as e:
+        flash(f"Confirmation error: {e}", "error")
+    return redirect(url_for("profile"))
+
+
+@app.route("/leave_review/<int:listing_id>", methods=["GET", "POST"])
+@login_required
+def leave_review(listing_id):
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            c = conn.cursor()
+            c.execute("SELECT user_id, buyer_id, is_confirmed FROM listings WHERE id = ?", (listing_id,))
+            listing = c.fetchone()
+            if not listing or listing[1] != current_user.id or not listing[2]:
+                flash("You cannot review this listing.", "error")
+                return redirect(url_for("profile"))
+            c.execute("SELECT id FROM reviews WHERE listing_id = ? AND buyer_id = ?", (listing_id, current_user.id))
+            if c.fetchone():
+                flash("Review already submitted.", "error")
+                return redirect(url_for("profile"))
+            if request.method == "POST":
+                rating = int(request.form.get("rating"))
+                comment = request.form.get("comment", "").strip()
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+                c.execute(
+                    "INSERT INTO reviews (listing_id, seller_id, buyer_id, rating, comment, timestamp) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (listing_id, listing[0], current_user.id, rating, comment, timestamp)
+                )
+                c.execute("SELECT AVG(rating) FROM reviews WHERE seller_id = ?", (listing[0],))
+                avg_rating = c.fetchone()[0] or 0.0
+                c.execute("UPDATE users SET seller_rating = ? WHERE id = ?", (avg_rating, listing[0]))
+                c.execute("DELETE FROM listings WHERE id = ?", (listing_id,))
+                conn.commit()
+                flash("Review submitted, listing removed!", "success")
+                return redirect(url_for("profile"))
+            return render_template("leave_review.html", listing_id=listing_id)
+    except Exception as e:
+        flash(f"Review error: {e}", "error")
+        return redirect(url_for("profile"))
+
+
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
-    pass
-
-
-@app.route("/marketplace")
-def marketplace():
-    pass
+    if not (current_user.is_admin or current_user.is_super_admin):
+        flash("Access denied. Admins only.", "error")
+        return redirect(url_for("index"))
+    try:
+        with sqlite3.connect(DATABASE) as conn:
+            conn.row_factory = sqlite3.Row
+            c = conn.cursor()
+            if request.method == "POST":
+                action = request.form.get("action")
+                user_id = request.form.get("user_id")
+                listing_id = request.form.get("listing_id")
+                is_authorized = current_user.is_super_admin and current_user.username == "superadmin"
+                if action == "delete_user" and is_authorized:
+                    c.execute("DELETE FROM users WHERE id = ?", (user_id,))
+                    flash("User deleted!", "success")
+                elif action == "toggle_admin" and is_authorized:
+                    c.execute("UPDATE users SET is_admin = NOT is_admin WHERE id = ?", (user_id,))
+                    flash("Admin status updated!", "success")
+                elif action == "toggle_super_admin" and is_authorized:
+                    c.execute("UPDATE users SET is_super_admin = NOT is_super_admin WHERE id = ?", (user_id,))
+                    flash("Super admin status updated!", "success")
+                elif action == "toggle_seller" and current_user.is_super_admin:
+                    c.execute("UPDATE users SET is_seller = NOT is_seller WHERE id = ?", (user_id,))
+                    flash("Seller status updated!", "success")
+                elif action == "adjust_balance" and current_user.is_super_admin:
+                    amount = float(request.form.get("amount", 0))
+                    c.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (amount, user_id))
+                    flash(f"Balance adjusted by ${amount:.2f}!", "success")
+                elif action == "delete_listing":
+                    c.execute("DELETE FROM listings WHERE id = ?", (listing_id,))
+                    flash("Listing deleted!", "success")
+                else:
+                    flash("Insufficient permissions.", "error")
+                conn.commit()
+            page = request.args.get("page", 1, type=int)
+            per_page = 10
+            offset = (page - 1) * per_page
+            user_search = request.args.get("user_search", "")
+            user_filter = request.args.get("user_filter", "all")
+            user_query = """
+                SELECT id, username, email, is_admin, is_super_admin, balance, is_seller, seller_rating 
+                FROM users 
+                WHERE username LIKE ?
+            """
+            user_params = [f"%{user_search}%"]
+            if user_filter == "admins":
+                user_query += " AND is_admin = 1"
+            elif user_filter == "super_admins":
+                user_query += " AND is_super_admin = 1"
+            elif user_filter == "sellers":
+                user_query += " AND is_seller = 1"
+            count_query = user_query.replace(
+                "SELECT id, username, email, is_admin, is_super_admin, balance, is_seller, seller_rating",
+                "SELECT COUNT(*)"
+            )
+            c.execute(count_query, user_params)
+            total_users = c.fetchone()[0]
+            total_pages = (total_users + per_page - 1) // per_page
+            user_query += " LIMIT ? OFFSET ?"
+            user_params.extend([per_page, offset])
+            c.execute(user_query, user_params)
+            users = [dict(row) for row in c.fetchall()]
+            listing_search = request.args.get("listing_search", "")
+            listing_filter = request.args.get("listing_filter", "all")
+            listing_query = """
+                SELECT l.id, l.title, l.price, u.username as seller, l.sold, l.category, l.timestamp 
+                FROM listings l 
+                JOIN users u ON l.user_id = u.id 
+                WHERE l.title LIKE ?
+            """
+            listing_params = [f"%{listing_search}%"]
+            if listing_filter == "active":
+                listing_query += " AND l.sold = 0"
+            elif listing_filter == "sold":
+                listing_query += " AND l.sold = 1"
+            c.execute(listing_query, listing_params)
+            listings = [dict(row) for row in c.fetchall()]
+        return render_template(
+            "admin.html", users=users, listings=listings, user_search=user_search,
+            user_filter=user_filter, listing_search=listing_search, listing_filter=listing_filter,
+            page=page, per_page=per_page, total_users=total_users, total_pages=total_pages
+        )
+    except Exception as e:
+        flash(f"Admin panel error: {e}", "error")
+        return render_template(
+            "admin.html", users=[], listings=[], user_search="", user_filter="all",
+            listing_search="", listing_filter="all", page=1, per_page=10, total_users=0, total_pages=0
+        )
 
 
 @app.route("/start_chat/<int:contact_id>")
@@ -689,6 +958,16 @@ def send_message(receiver_id):
 @app.route("/faq")
 def faq():
     return render_template("faq.html")
+
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
 
 
 @app.before_request
