@@ -541,6 +541,9 @@ def register():
         if len(username) < 4:
             flash("Username must be at least 4 characters.", "error")
             return render_template("register.html")
+        if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", email):
+            flash("Please enter a valid email address.", "error")
+            return render_template("register.html")
         if password != confirm_password:
             flash("Passwords do not match.", "error")
             return render_template("register.html")
