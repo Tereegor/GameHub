@@ -979,6 +979,4 @@ def check_user_cookie():
             login_user(user, remember=True)
 
 
-if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
+init_db()
