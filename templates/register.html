@@ -10,7 +10,6 @@
 <body class="lang-{{ 'ru' if g.lang == 'ru' else 'en' }}">
 <header>
     <a href="{{ url_for('index') }}" class="logo">GameHub</a>
-    <div class="hamburger"><i class="fas fa-bars"></i></div>
     <nav>
         <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> <span data-en="Home" data-ru="Главная">{{ 'Home' if g.lang == 'en' else 'Главная' }}</span></a>
         <a href="{{ url_for('marketplace') }}"><i class="fas fa-shopping-cart"></i> <span data-en="Marketplace"
